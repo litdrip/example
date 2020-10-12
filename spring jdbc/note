@@ -1,0 +1,23 @@
+官方技术文档：
+https://docs.spring.io/spring-data/jdbc/docs/2.0.3.RELEASE/reference/html/#preface
+
+Mysql驱动链接配置资料：
+https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-usagenotes-spring-config.html
+
+示例：
+https://blog.csdn.net/crazyman2010/article/details/98207539
+
+CREATE TABLE `todo` (
+  `todo_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '待办标识',
+  `todo_type` int(11) NOT NULL COMMENT '类型 1-点播审核 2-直播审核 3-点评邀请 4-直播提醒',
+  `user_id` varchar(64) NOT NULL COMMENT '待办人',
+  `res_id` bigint(20) NOT NULL COMMENT '资源标识',
+  `res_name` varchar(256) NOT NULL COMMENT '资源名称',
+  `lecturer_name` varchar(256) NOT NULL COMMENT '讲课人',
+  `school_name` varchar(256) NOT NULL COMMENT '学校名称',
+  `start_time` timestamp NOT NULL COMMENT '开始时间',
+  `end_time` timestamp NOT NULL COMMENT '结束时间',
+  `state` int(11) NOT NULL COMMENT '0-删除 1-正常',
+  PRIMARY KEY (`todo_id`),
+  KEY `Index_user` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='待办'
