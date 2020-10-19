@@ -1,0 +1,9 @@
+
+mvc
+https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/web.html
+
+guide
+https://spring.io/guides
+https://spring.io/guides/gs/serving-web-content/
+https://spring.io/guides/gs/rest-service/
+https://spring.io/guides/gs/securing-web/
