@@ -1,9 +1,0 @@
-https://spring.io/projects/spring-session#samples
-session建立样例
-https://docs.spring.io/spring-session/docs/current/reference/html5/guides/java-security.html
-基础安全认证样例
-https://spring.io/guides/gs/securing-web/
-
-资料：
-https://zhuanlan.zhihu.com/p/85543763
-https://www.cnblogs.com/nick-huang/p/6986824.html
