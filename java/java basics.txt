@@ -1,0 +1,43 @@
+变量
+
+使用范围：实例、类、本地方法、参数。 (instance/class/local/parameter)
+
+命名规则：
+1、大小写敏感 case sensitvie
+2、无限长度 unlimited length
+3、由字母、数字、下划线、美元符组成，不能数字开头。
+4、不能使用关键词 not be keyword
+
+基本数据类型：
+byte	整数	8位	2的补码
+short	整数	16位	2的补码
+int	整数	32位	2的补码
+long	整数	64位	2的补码
+float	浮点	32位	IEEE754
+double	浮点	64位	IEEE754
+boolean	布尔
+char	字符	16位	unicode
+
+引用数据类型：
+class	类
+interface	接口
+array	数组
+
+操作符：
+赋值	=
+数学	+ - * / %
+一元	+ - ++ -- !
+关系	== != > >= < <=
+条件	&& || ?:
+位移	~ << <<< >> >>> & ^ |
+
+流程控制:
+if then else
+switch
+while
+do-while
+for
+break
+continue
+return
+

@@ -1,0 +1,42 @@
+https://www.cnblogs.com/takumicx/p/9998844.html
+https://www.cnblogs.com/kismetv/p/10331633.html
+https://www.cnblogs.com/huigelaile/p/10983982.html
+
+spring transaction
+https://www.jianshu.com/p/d5b0314eccfa
+https://developer.ibm.com/zh/articles/j-master-spring-transactional-use/
+
+缘起：
+一件事情，如转账，实际操作时会被分成两步。在执行过程中，如果发生中断，如系统崩溃，就会导致
+数据不一致，出错。
+除了异常崩溃引起的中断，还有一种就是并发操作。
+
+解决概念：
+事务ACID
+-原子性atomicity，事物中操作为一整体，要么全成功，要么全失败。
+-一致性consistency,满足完整性约束，满足业务真实状态。
+-持久性durability,一旦提交，无论发生什么都不会致数据丢失。
+-隔离性isolation,两个事物互不影响。
+
+解决使用技术：
+并发控制(隔离性，一致性)
+	常见并发异常：
+		脏写 -回滚时连带其它事物已提交结果也回滚
+		丢失更新 -提交覆盖了其它事物已提交更新
+		脏读 -读取了其它未提交更新
+		不可重复 -前后读取不一致，中间有其它事物更新
+		幻读 -查询条件记录数量，前后不一致，中间有其它事物更新
+
+	隔离级别：(隔离实现记录机制)
+		读未提交
+		读已提交
+		可重复读
+		串行化
+
+	使用锁：
+		乐观锁(快照隔离，有效性检查)，悲观锁(时间戳排序，封锁)
+		共享锁，排它锁
+
+日志恢复(原子性，持久性，一致性)
+	undo(事务故障，正常回滚,崩溃回复)
+	redo(崩溃回复)

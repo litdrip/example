@@ -1,0 +1,114 @@
+----------------------------------------------------------------------------------------
+文档资料
+https://spring.io/projects/spring-security
+https://docs.spring.io/spring-security/site/docs/5.4.5/reference/html5/#introduction
+
+spring模板制作
+https://start.spring.io/
+
+官方给的样例:
+https://github.com/spring-projects/spring-security/tree/5.4.5/samples
+----------------------------------------------------------------------------------------
+探索:
+
+----------------------------------------------------------------------------------------
+实现:
+
+-数据库实现账号管理.
+@Service("userDetailsService")
+public class DatabaseUserDetailsService implements UserDetailsService {
+
+    private final BCryptPasswordEncoder pe = new BCryptPasswordEncoder();
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String name) throws UsernameNotFoundException {
+        List<persistent.User> list = userRepository.findByName(name);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new UsernameNotFoundException(name);
+        } else {
+            persistent.User org = list.get(0);
+            return new User(org.getName(), org.getPassword(), Collections.singleton(new SimpleGrantedAuthority(org.getRole())));
+        }
+    }
+}
+
+@Configuration
+@EnableWebSecurity
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService).passwordEncoder(new BCryptPasswordEncoder());
+        auth.authenticationProvider(authenticationProvider);
+    }
+}
+
+-实现控制验证过程,密码校验. 实现一个无需密码的.
+@Service
+public class NoAuthenticationProvider implements AuthenticationProvider {
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        String userName = Objects.isNull(authentication.getPrincipal()) ? "NONE_PROVIDED" : authentication.getName();
+        String password = Objects.isNull(authentication.getCredentials())? "NONE_PROVIDED" : authentication.getCredentials().toString();
+        UserDetails user = new User(userName, password, Collections.singleton(new SimpleGrantedAuthority("USER")));
+
+        UsernamePasswordAuthenticationToken result = new UsernamePasswordAuthenticationToken(
+                user,authentication.getCredentials(),user.getAuthorities()
+        );
+        return result;
+    }
+
+    @Override
+    public boolean supports(Class<?> authentication) {
+        return (UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication));
+    }
+}
+
+@Configuration
+@EnableWebSecurity
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    private AuthenticationProvider authenticationProvider;
+
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(authenticationProvider);
+    }
+}
+
+-自定义userDetail.放入一些自定义的信息.
+public class CustomUserDetails extends User {
+
+    public CustomUserDetails(String username, String password, Collection<? extends GrantedAuthority> authorities) {
+        super(username, password, authorities);
+    }
+
+    public CustomUserDetails(String username, String password, boolean enabled, boolean accountNonExpired, boolean credentialsNonExpired, boolean accountNonLocked, Collection<? extends GrantedAuthority> authorities) {
+        super(username, password, enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
+    }
+
+    private int grade;
+
+    public int getGrade() {
+        return grade;
+    }
+
+    public void setGrade(int grade) {
+        this.grade = grade;
+    }
+}
+
+    @GetMapping("/hello")
+    public ModelAndView hello(HttpServletRequest request) {
+        Authentication auth = (Authentication) request.getUserPrincipal();
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        ModelAndView mv = new ModelAndView("hello");
+        mv.addObject("details", userDetails);
+        return mv;
+    }

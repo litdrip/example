@@ -1,0 +1,12 @@
+----------------------------------------------------------------------------------------
+---[范例]-------------------------------------------------------------------------------
+int insertBatch(@Param("list") List<OaVideoState> list);
+
+<insert id="insertBatch" parameterType="java.util.List">
+    insert into oa_video_state (area_code, key_name, past_value, now_value)
+    values
+    <foreach collection="list" item="item" separator=",">
+	(#{item.areaCode,jdbcType=VARCHAR}, #{item.keyName,jdbcType=VARCHAR},
+	#{item.pastValue,jdbcType=BIGINT}, #{item.nowValue,jdbcType=BIGINT})
+    </foreach>
+ </insert>

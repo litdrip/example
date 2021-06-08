@@ -1,0 +1,654 @@
+20210325
+https://docs.spring.io/spring-security/site/docs/5.4.5/reference/html5/#introduction
+手册目录:
+介绍
+1.先决条件
+2.社区
+    2.1.获取帮助
+    2.2.参与项目
+    2.3.源码
+    2.4.Apache2许可
+    2.5.社会媒体
+3.新特性
+    3.1.文档更新
+    3.2.更新日志
+    3.3.Servlet
+    3.4.WebFlux
+    3.5.附加更新
+    3.6.构建修改
+4.获取Spring Security
+    4.1.发布版本
+    4.2.使用maven
+    4.3.使用gradle
+5.特性
+    5.1.身份验证
+    5.2.安全防护
+6.项目模型和依赖
+    6.1.核心core
+    6.2.远程处理remoting
+    6.3.Web
+    6.4.配置config
+    6.5.LDAP
+    6.6.OAuth2.0核心
+    6.7.OAuth2.0客户端
+    6.8.OAuth2.0JOSE
+    6.9.OAuth2.0源服务
+    6.10.ACL
+    6.11.CAS
+    6.12.OpenID
+    6.13.测试Test
+    6.14.标记库Taglibs
+7.样例
+Servlet应用程序
+8.Hello Spring Security
+    8.1.更新依赖
+    8.2.启动Hello Spring Security Boot
+    8.3.Spring Boot 自动配置
+        Spring Boot自动配置的功能:
+	-开启Spring Security的默认配置,创建名称为springSecurityFilterChain的
+	servlet过滤器,此bean负责所有应用中安全相关事宜(保护应用URLS,验证用户
+	密码,重定向至登录窗口,等等)
+	-创建UserDetailsService,用户名称为user的用户,和产生一个随机密码.
+	-将springSecurityFilterChain注册进Servlet容器,为所有请求.
+    
+    Spring Boot配置不多,但有很多作用.其特点总结如下:
+	-任何与应用交互都需要一个经过验证的用户.
+	-生成一个默认的登录窗口.
+	-让用户使用user和一个密码登录验证(在之前例子中,密码是8e557245-73e2-4286-969a-ff57fe326336).
+	-使用BCrypt保护存储密码.
+	-让用户可以登出.
+	-预防CSRF攻击.
+	-Session固定保护.
+	-安全头部整合
+		HTTP严格传输安全
+		X-Content-Type-Options整合
+		缓存控制
+		X-XSS-Protection整合
+		X-Frame-Options整合
+	-整合一下API方法:
+		HttpServletRequest#getRemoteUser()
+		HttpServletRequest.html#getUserPrincipal()
+		HttpServletRequest.html#isUserInRole(java.lang.String)
+		HttpServletRequest.html#login(java.lang.String, java.lang.String)
+		HttpServletRequest.html#logout()
+9.架构宏图
+    	此节讨论Spring Security基于Servle应用的高层框架.建立这样高层级理解身
+	    份验证,授权,防范漏洞.
+    9.1.复习过滤器
+        Spring Security的Servlet支持基于Servlet过滤器,因此先了解过滤器非常有
+        帮助,下图展示了典型的一个HTTP请求处理过程.
+
+        客户端向应用发起请求,容器创建一个包含过滤器和Servlet的过滤链,基于请
+        求URI路径处理HttpServletRequest.在Spring MVC应用中这里的Servlet是
+        一个DispatcherServlet实例.最多一个Servlet能处理单个HttpServletRequest
+        和HttpServletResponse.但是,可以使用多个过滤器:
+        -防止下游过滤器或Servlet被调用.此实例过滤器通常会写HttpServletResponse.
+        -使用下游过滤器和Servlet修改HttpServletRequest或HttpServletResponse.
+        过滤器能力来自有通过的过滤链.
+	
+	因过滤器影响下周过滤器和Servlet,每个过滤器的调用次序就变得异常重要.
+    9.2.委派过滤器代理
+        Spring提供一种过滤器的实现名为DelagatingFilterProxy委任过滤器代理,
+        允许桥接Servlet容器生命周期和Spring应用程序上下文.Servlet容器允许使用
+        自己的标准注册过滤其,但其无法察觉Spring定义的Beans.
+        DelegatingFilterProxy委派过滤器代理可以通过标准Servlet容器机制注册,
+        但将所有工作委派给Spring Bean来实现过滤.
+
+        另一个好处是委派过滤器代理允许推迟查找过滤器实例.这一个非常重要,因
+        容器需要在启动前注册过滤器实例.然而,Spring通常使用
+        ContextLoaderListener来加载Spring Beans,此加载直到过滤器实例需要
+        注册时才会问完成.
+    9.3.过滤链
+    	Spring Security的Servlet支持包含在FilterChainProxy过滤链代理中.
+        Spring Security提供的FilterChainProxy是个一个特殊的过滤器,允许通过
+        SecurityFilterChain委派许多过滤器实例.因FilterChainProxy是一个Bean,
+        通常包装在DelegatingFilterProxy.
+    9.4.安全过滤链
+    	过滤链代理使用SecurityFilterChain决定为那些Spring Security过滤器用于
+        处理请求.
+        
+        Security Filters是在SecurityFilterChain中通常是Beans,但它们是在
+        FilterChainProxy注册替换了DelegatingFilterProxy.直接注册Servlet容器
+        或DelegatingFilterProxy带来了很多好处.第一,为支持所有Spring Security
+        的Servlet提供了一个开始点,如果需要尝试排除故障,添加一个debug点到
+        FilterChainProxy是一个好的选择.
+        第二,因为FilterChainProxy是Spring Security使用的核心,其执行任务不会
+        被是为可选的.例如,清理SecurityContext来避免内存泄露.也应用HttpFirewall
+        保护应用针对某些类型攻击.
+
+        此外,它在对何时调用SecurityFilterChain提供了更大灵活性.在Servlet容器
+        中,仅基于URL调用过滤器.然而,FilterChainProxy可以基于在
+        HttpServletRequest中的任何内容,通过RequestMatcher接口.
+
+        实际上,FilterChainProxy可以用于决定那个SecurityFilterChain应用被使用.
+        这允许为应用程序的不同部分提供完全独立的配置.
+
+        在多个SecurityFilterChain中FilterChainProxy决定使用那个.仅第一个匹配
+        的SecurityFilterChain会被调用.如果/api/messges/请求,它将匹配/api/**
+        的过滤链,所以只有该过滤链会被调用.
+
+        注意0号过滤链仅配置了三个安全过滤器实例.然而,n号配置了4个.每个过滤
+        链可以是唯一的并独立配置这点很重要.实际上,如果应用想要Spring Security
+        忽略具体的请求可以让过滤链不配置过滤器来达到目的.
+    9.5. Security Filters	安全过滤器
+        安全过滤器通过SecurityFilterChain API插入到FilterChainProxy.过滤器的
+        顺序很重要.通常无需知道安全过滤器的顺序.然而,有时了解这个是由好处的.
+
+        以下列出了安全过滤器的顺序:
+        -ChannelProcessingFilter
+        -WebAsyncManagerIntegrationFilter
+        -SecurityContextPersistenceFilter
+        -HeadeWriterFilter
+        -CorsFilter
+        -CsrfFilter
+        -LogoutFilter
+        -OAuth2AuthorizationRequestRedirectFilter
+        -Smal2WebSsoAuthenticationRequestFilter
+        -X509AuthenticationFilter
+        -AbstractPreAuthenticatedProcessingFilter
+        -CasAuthenticationFilter
+        -OAuth2LoginAuthenticationFilter
+        -Saml2WebSsoAuthenticationFilter
+        -UsernamePasswordAuthenticationFilter
+        -OpenIDAuthenticationFilter
+        -DefaultLoginPageGeneratingFilter
+        -DefaultLogoutPageGeneratingFilter
+        -ConcurrentSessionFilter
+        -DigestAuthenticatinFilter
+        -BearerTokenAuthenticationFilter
+        -BasicAuthenticationFilter
+        -RequestCacheAwareFilter
+        -SecurityContextHolderAwareRequestFilter
+        -JaasApiIntegrationFilter
+        -RememberMeAuthenticationFilter
+        -AnonymousAuthenticationFilter
+        -OAuth2AuthrizationCodeGrantFilter
+        -SessionManagementFilter
+        -ExceptionTranslationFilter
+        -FilterSecurityInterceptor
+        -SwitchUserFilter
+    9.6.处理安全异常
+10.安全验证
+        Spring Security为身份验证提供完全的支持.
+        
+        Architecture Components	体系结构
+        本节描述身份验证的主要的结构组件.如果你需要具体流程来解释这些部分如
+        何组合到一起的,请查看Authentication Mechanism小节.
+        -SecurityContextHolder	存储谁是否已验证的详细信息.
+        -SecurityContext	从SecurityContextHolder获得当前验证用户的Authentication.
+        -Authentication	能被放入AuthenticationManager提供身份验证凭据.
+        -GrantedAuthority	赋予权力授权(即 角色,范围,等)
+        -AuthenticationManager	定义过滤器如何执行authentication的API.
+        -ProviderManger	最常见的AuthenticationManger的实现.
+        -AuthenticationProvider	ProviderManager用来执行特定的身份验证.
+        -Request Credentials with AuthenticationEntryPoint	用于从客户端请求票据
+            (即.重定向登录页,发送WWW-Authenticate响应,等.)
+        -AbstractAuthenticationProcessingFilter	用于身份验证的一个基本过滤器.
+
+        Authentication Mechanisms	身份验证机制
+        -Username and Password	如何通过用户名密码验证
+        -OAuth 2.0 Login	通过OpenID连接和非标准OAuth2.0登录(如.GitHub)
+        -SAML 2.0 Login	SAML2.0登录.
+        -Central Authentication Server (CAS)	中央身份验证服务器
+        -Remember Me	如何记住session过期用户
+        -JAAS Authentication	JAAS身份验证
+        -OpenID	OpenID身份验证
+        -Pre-Authentication Scenarios	使用外部机制验证,但依然使用Spring Security防止攻击.
+        -X509 Authentication	X509身份验证
+    10.1.上下文持有
+    	模型的核心.包含SecurityContext,存储通过验证者详细信息.Spring Security不关心如何填
+        充SecurityContextHolder.如果它包含一个值,那么它将用作经过身份验证的用户.
+        表明一个用户经过验证最简单方法就是直接设置SecurityContextHolder.
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        Authentication authentication = new TestingAuthenticationToken("username","passowrd","ROLE_USER");
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
+        从建立一个空的SecurityContext开始.这点很重要建立空对象而不用
+        SecurityContextHolder.getContext().setAuthentication(authentication)来避免多线程
+        争用问题.下一步建立Authentication对象,Spring security并不管线Authentication如何实现.
+        这里使用TestingAuthenticationToken是因为此类非常简单.生产环境更常会用到
+        UsernamePasswordAuthenticationToken(userDetails, password, authorities).
+        最后,将SecurityContext设置到SecurityContextHolder中.Spring Secrity就会用这个信息验证.
+
+        如果你希望获取验证的主体信息,可以通过SecurityContextHolder访问.
+        SecurityContext context = SecurityContextHolder.getContext();
+        Authentication authentication = context.getAuthentication();
+        String username = authentication.getName();
+        Object principal = authentication.getPrincipal();
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+        默认的SecurityContextHolder使用ThreadLocal存储详细,这意味着SecurityContext在同
+        线程中对方法是一直可用,即使SecurityContext没有显示的作为方法参数来传递.使用这
+        中方法是非常安全的,如果在处理请求后小心的清楚.Spring Security的FilterChainProxy
+        确保始终清除SecurityContext.
+
+        有些应用不适合完全使用ThreadLocal,因为它们的线程处理方式.例如,Swing客户端可能
+        想要所有线程使用相同的安全上下文.SecurityContextHolder可以配置指定你所希望的
+        存储策略.为单独的应用会使用SecurityContextHolder.MODE_GLOBAL策略.其它应用
+        可能让安全线程派生的线程有相同的安全标识,可以使用MODE_INHERITABLETHREADLOCAL.
+        可以从默认MODE_THREADLOCAL改到这两个模式上.第一个是设定系统属性,第二个是
+        调用一个静态的SecurityContextHolder.大部分应用不需要修改,但如果需要,请查看JavaDoc
+        有关SecurityContextHolder更多内容.
+    10.2.上下文持
+        此对象是从SecurityContextHolder获取.SecurityContext包含一个Authentication对象.
+    10.3.身份验证
+       	Authenticaton服务主要有两点:
+        -作为AuthenticationManager的输入提供已提供验证用户凭据.当使用此场景,isAuthenticated()返回false
+        -表示当前已验证用户.当前Authentication可以通过SecurityContext获取.
+        
+        Authentication包含:
+        -principal	用户标识.当用用户密码验证的用户通常是一个UserDetails实例.
+        -credentials	凭证通常是密码.很多情况下在用户验证后会被清理,避免泄露.
+        -authorities	GrantedAuthority是授予用户高级权限.一些列子如角色或作用域.
+    10.4.授权
+       	GrantedAuthority是授予用户高级权限.一些列子如角色或作用域.
+	
+        可以通过Authentication.getAuthorities()方法获取.此方法提供GrantedAuthority对象集合.
+        一个GrantedAuthority,毫不奇怪,是一个授予权限.这种授权通常是"角色",如ROLE_ADMINSTRATOR
+        或ROLE_HR_SUPERVISOR.这些角色后面会为配置web授权,方法授权和域对象授权.Spring Security
+        的其它部分能够解释这些权限,期望它们出现.当使用基于用户密码验证的GrantedAuthority
+        通常加载自UserDetailsService.
+
+        通常GrantedAuthority对象是应用范围的权限.它们不特定于给定的域对象.因此,不太可能有
+        一个表示54号雇员的授权权限,因为如果有上千个这样的授权,可能很快就会内存溢出(或,至少
+        会引起应用验证用户很慢).当然,Spring Security是专门处理这个长纤需求设计,但可以使用项
+        目的域对象功能来实现这个目的.
+    10.5.身份验证管理器
+       	验证管理器是定义Spring Secrity过滤器如何执行authentication的API.Authentication在
+        SecurityContextHolder的控制是通过调用AuthentciationManager.如果没有整合过滤器
+        可以通过直接设置SecurityContextHolder并不需要使用AuthenticationManager.
+
+        AuthenticationManger可以是任何实现,最常用的实现是ProviderManager.
+    10.6.管理器提供者
+    	ProviderManager是最常用于实现AuthenticationManager.ProviderManager代表一系
+        列AuthenticationProvider.每个提供者都有机会表明验证应当成功,失败,或无法决定由下游
+        提供者决定.如果未配置任何可用提供者,验证将失败并抛出ProviderNotFoundException.
+        
+        实践中每个提供者知道如何执行特定类型的验证.列如,一个提供者可能校验用户密码,另一些
+        可以通过SAML断言.这允许提供者做非常确定类型的验证,同时支持多种类型的验证而只需要
+        提供一个单独AuthenticationgManager.
+
+        ProviderManager也允许配置一个可选的父提供者管理器,在没有任何提供者时可以使用.父
+        提供者可是任何类型的AuthenticationManager,但通常是一个ProviderManager实例.
+
+        实际上,多个ProviderManager实例可能会共享使用相同的父AuthenticationManager.
+        在多SecruityFilterChain通常有多验证实例场景中比较常见,但也有不同机制身份验证.
+
+        默认的ProviderManager会尝试清理Authentication中任何敏感凭证信息.这样避免如
+        密码信息过长在HttpSession中保留,而这完全没有必要.
+
+        当使用缓存用户对象时这可能会产生问题,例如,为了提升无状态应用的性能.如果Authentication
+        包含一个指向缓存的对象(如UserDetails实例)并已删除凭证,此时将无法再根据缓存的值
+        进行身份严重.如果使用缓存就需要考虑到这一点.一个显而易见的解决方法是先拷贝一份
+        对象,在缓存实现中或在AuthenticationProvider.或,可以关闭ProverManager中的
+        eraseCredentialsAfterAuthentication属性.更多信息见Javadoc.
+    10.7.身份验证提供者
+    	多验证提供者可以注入到提供者管理器中.每个验证提供者执行一种特定类型的验证.例如
+        ,DaoAuthenticationProvider支持基于用户密码验证,JwtAuthenticationProvider支持
+        JWT标志验证.
+    10.8.请求凭据
+    	验证入口点用于发送HTTP响应从客户段请求凭证.
+
+        有些时候客户端会主动包含凭证,如用户密码请求资源.这种情况下,无需这么做.
+
+        另一些情况,客户端会发起未验证请求,并五权限访问.这时,验证入口点会实现请求
+        客户端.验证入口点的实现可能是执行重定向到登录页面,回应WWW-Authenticate头部,等.
+    10.9.抽象身份验证
+    	抽象验证处理过滤器作为验证用户凭证的基本过滤器.在凭证被验证前,通常使用
+        验证入口点请求凭证.然后抽象验证处理过滤器可以验证任何提交的验证请求.
+
+        1.当用户提交凭证,抽象验证处理过滤器会从Servlet请求创建一个验证器.验证器
+        类型依赖于验证处理过滤器.例如,用户密码验证过滤器创建用户密码验证标示.
+        2.下一步,验证信息会传送至验证管理器进行验证.
+        3.如果失败
+            -SecurityContextHolder被清理.
+            -RememberMeServices.loginFail被调用,如果没有配置记住用户,则禁止这么做.
+            -AuthenticationFailureHandler调用.
+        4.如果成功
+            -SessionAuthenticationStrategy被通知一个新的登录
+            -Authentication设置到SecurityContextHolder.随后SecurityContextPersistenceFilter
+            将SecurityContext保存到HttpSession.
+            -如果启用了记住用户,调用RememberMeServices.loginSuccess.
+            -发布InteractiveAuthentictionSuccessEvent事件.ApplicationEventPublisher.
+            -调用AuthenticationSuccessHandler.
+    10.10.用户名/密码验证
+        	最常使用的验证方式.因此,Spring Security提供全面的支持.
+            Reading the Username & Password
+        Spring Security提供一下内置机制从HttpServletRequest读取用户名密码:
+        -Form Login	表单登录
+        -Basic Authentication	基本验证
+        -Diget Authentication	摘要验证
+
+    Storage Mechanisms
+        每种支持的读取用户密码机制都可以使用任何一种支持的存储机制.
+        -简单的 In-Memory Authentication
+        -关系数据库 JDBC Authentication
+        -自定义存储 UserDetailService
+        -LDAP存储 LDAP Authentication
+
+    10.10.1. Form Login	表单登录
+        Spring Security支持通过表单提供用户名密码.本节详细描述如何基于表单验证过程.
+
+        首先看下重定向登录表单
+        1.用户发球未验证的请求/private,此资源为授权.
+        2.FilterSecurityInterceptor表明此请求被拒绝,抛出AccessDeniedException.
+        3.因为用户没有身份验证,ExceptionTranslatingFilter启动身份验证,并发送重定向页面,
+        由AuthenticationEntryPoint配置的页面.大多数情况下AuthenticationEntryPoint使用
+        LoginUrlAuthenticationEntryPoint实例.
+        4.浏览器重定向请求登录页面.
+        5.应用程序中的某些内容,必须重新登录.
+        
+        当用户名和密码提交上来,UsernamePasswordAuthenticationFilter会验证用户名密码
+        .此过滤器继承自AbstractAuthenticationProcessingFilter.
+        1.当用户密码提交,UsernamePasswordAuthenticationFilter从HttpServletRequest提取
+        用户名密码创建UsernamePasswordAuthenticationToken,此Token就是一种Authentication.
+        2.Token传给AuthenticationManger进行验证.具体如何验证依赖于用户信息存储方式.
+        3.如果验证失败.
+            -当前SecurityContextHolder会被清理.
+            -如果配置了remember me,会调用RememberMeServices.loginFail.
+            -调用AuthenticationFailureHandler.
+        4.如果验证成功.
+            -SessionAuthenticationStrategy被通知一个新的登录.
+            -Authentication设置到SecurityContextHolder.
+            -如果配置了remember me,则调用RememberMeServices.loginSuccess.
+            -应用发布InteractiveAuthenticationSuccessEvent事件.
+            -AuthenticationSuccessHandler被调用.通常这是一个SimpleUrlAuthenticationSuccessHandler
+            将请求重定向到ExceptionTranslationFilter保留的最初请求的页面.
+
+        Spring Security默认开启表单登录.然而,一旦提供了任何基于servlet配置,必须明确提供基于表单登录.
+        一个最简单的配置:
+        protected void configure(HttpSecurity http){
+            http.formLogin(withDefaults());
+        }
+
+
+
+    10.10.4. In-Memory Authentication
+        InMemoryUserDetailsManager实现UserDetailsService提供基于用户密码验证支持在
+        内存中检索用户信息.此类也提供UserDetails管理,通过实现UserDetailsManager接口.
+        Spring Security当配置接受用户密码验证时会使用基于UserDetails的身份验证.
+
+        下面简单例子中,使用Spring Boot CLI编码密码.
+
+    10.10.6. UserDetails
+        UserDetails是由UserDetailsService返回.DaoAuthenticationProvider校验UserDetails
+        并返回Authentication.
+
+    10.10.7. UserDetailsService
+        UserDetailsService是DaoAuthenticationProvider用来检索用户名,密码,和其他一些属性
+        用于验证用户名密码.Spring Security提供了内存和JDBC两种实现UserDetailsService.
+
+        可以自定义UserDetailsService.例,CustomUserDetailsService实现接口自定义服务.
+    10.11.会话管理
+        	HTTP session相关功能由SessionManagementFilter和SessionAuthenticationStrategy接
+	    口组合处理.通常使用包含预防session固定攻击保护,检测会话超时和限制会话打开数量.
+    10.12.记住用户验证
+    10.13.开放标识支持
+    10.14.匿名验证
+    10.15.预验证方案
+    10.16.Java验证和服务授权提供
+    10.18.CAS验证
+    10.18.X.509验证
+    10.19.验证替换
+    10.20.处理登出
+    10.21.身份验证事件
+11.授权
+    11.1.体系结构
+    11.2.授权请求
+    11.3.表达式
+    11.4.安全对象实现
+    11.5.安全方法
+    11.6.对象域安全
+12.OAuth2
+    12.1.登录
+    12.2.客户端
+    12.3.源服务器
+13.SAML2
+    13.1.登录
+14.安全防范
+    14.1.跨站点伪造请求CSRF
+    14.2.安全HTTP应答头
+15.整合
+    15.1.Servlet API整合
+        本章节描述如何集成Spring Security与Servlet API.样例(https://github.com/spring-projects/spring-security/tree/master/samples/xml/servletapi)
+	    演示了每个方法的用法.
+        15.1.1. Servlet 2.5+ Integration
+
+        HttpServletRequest.getRemoteUser()
+        实际SecurityContextHolder.getContext().getAuthentication().getName()获取当前
+        用户名,此方法非常有用.此外,检查用户名是不是null可以表明用户是否已验证或是匿名.
+        
+        HttpServletRequest.getUserPrincipal()
+        实际SecurityContextHolder.getContext().getAuthentication().返回是Authentication
+        在基于用户名密码验证中通常的实例是UsernamePasswordAuthenticationToken.
+        如果需要附加用户信息.例,可以创建自定义UserDetailService返回自定义的UserDetails
+        包含first和last名称.可以通过如下代码获取内容:
+        Authentication auth = httpServletRequest.getUserPrincipal();
+        MyCustomUserDetails userDetails = (MyCustomUserDetails) auth.getPricipal();
+        String firstName = userDetails.getFirstName();
+        String lastName = userDetails.getLastName();
+
+        HttpServletRequest.isUserInRole(String)
+        实际SecurityContextHolder.getContext().getAuthentication().getAuthorities()包含
+        一个GrantedAuthority角色传入到isUserInRole(String).
+    15.2.Spring Data 整合
+    15.3.并发支持
+    15.4.Jackson支持
+    15.5.本地化支持
+    15.6.Spring MVC 整合
+    15.7.WebSocket 安全
+    15.8.CORS
+    15.9.JSP标签库
+16.Java配置
+    16.1.Hello项目配置
+    16.2.Http安全
+    16.3.多重HttpSecurity
+    16.4.定制DSLs
+    16.5.Post处理配置对象
+17.Kotlin配置
+    17.1.HttpSecurity
+    17.2.多重HttpSecurity
+18.Security命名空间配置
+    18.1.命名空间设计
+    18.2.命名空间配置
+    18.3.高级Web特性
+    18.4.方法安全
+    18.5.默认访问管理器
+19.测试
+    19.1测试安全
+    19.2.Spring MVC测试整合
+20.Spring Security Crypto模型
+    20.1.介绍
+    20.2.加密
+    20.3.生成密钥
+    20.4,密码编码
+21附录
+    21.1.安全数据架构
+    21.2.安全命名空间
+    21.3.FAQ
+反应式应用程序
+22.WebFlux Security
+    22.1.最简配置
+    22.2.明确配置
+23.安全防范
+    23.1.跨站伪请求
+    23.2.安全应答头
+    23.3.HTTP
+24.OAuth2 WebFlux
+    24.1.登录
+    24.2.客户端
+    24.3.源服务
+25.注册OAuth
+26.反应式X.509身份验证
+27.WebClient
+    27.1.安装
+    27.2.隐式客户端
+    27.3.显示客户端
+    27.4.客户端注册
+28.开启反应式安全方法
+29.反应式测试支持
+    29.1.测试反应安全方法
+    29.2.测试web客户端支持
+30.RSocket安全
+    30.1.最简配置
+    30.2.添加安全接收器
+    30.3.身份验证
+    30.4.授权
+
+
+内容
+
+介绍
+1.先决条件
+2.社区
+    2.1.获取帮助
+    2.2.参与项目
+    2.3.源码
+    2.4.Apache2许可
+    2.5.社会媒体
+3.新特性
+    3.1.文档更新
+    3.2.更新日志
+    3.3.Servlet
+    3.4.WebFlux
+    3.5.附加更新
+    3.6.构建修改
+4.获取Spring Security
+    4.1.发布版本
+    4.2.使用maven
+    4.3.使用gradle
+5.特性
+    5.1.身份验证
+    5.2.安全防护
+6.项目模型和依赖
+    6.1.核心core
+    6.2.远程处理remoting
+    6.3.Web
+    6.4.配置config
+    6.5.LDAP
+    6.6.OAuth2.0核心
+    6.7.OAuth2.0客户端
+    6.8.OAuth2.0JOSE
+    6.9.OAuth2.0源服务
+    6.10.ACL
+    6.11.CAS
+    6.12.OpenID
+    6.13.测试Test
+    6.14.标记库Taglibs
+7.样例
+Servlet应用程序
+8.Hello Spring Security
+    8.1.更新依赖
+    8.2.启动Hello Spring Security Boot
+    8.3.Spring Boot 自动配置
+9.架构宏图
+    9.1.复习过滤器
+    9.2.委派过滤器代理
+    9.3.过滤链
+    9.4.安全过滤链
+    9.6.处理安全异常
+10.安全验证
+    10.1.上下文持有
+    10.2.上下文持
+    10.3.身份验证
+    10.4.授权
+    10.5.身份验证管理器
+    10.6.管理器提供者
+    10.7.身份验证提供者
+    10.8.请求凭据
+    10.9.抽象身份验证
+    10.10.用户名/密码验证
+    10.11.会话管理
+    10.12.记住用户验证
+    10.13.开放标识支持
+    10.14.匿名验证
+    10.15.预验证方案
+    10.16.Java验证和服务授权提供
+    10.18.CAS验证
+    10.18.X.509验证
+    10.19.验证替换
+    10.20.处理登出
+    10.21.身份验证事件
+11.授权
+    11.1.体系结构
+    11.2.授权请求
+    11.3.表达式
+    11.4.安全对象实现
+    11.5.安全方法
+    11.6.对象域安全
+12.OAuth2
+    12.1.登录
+    12.2.客户端
+    12.3.源服务器
+13.SAML2
+    13.1.登录
+14.安全防范
+    14.1.跨站点伪造请求CSRF
+    14.2.安全HTTP应答头
+15.整合
+    15.1.Servlet API整合
+    15.2.Spring Data 整合
+    15.3.并发支持
+    15.4.Jackson支持
+    15.5.本地化支持
+    15.6.Spring MVC 整合
+    15.7.WebSocket 安全
+    15.8.CORS
+    15.9.JSP标签库
+16.Java配置
+    16.1.Hello项目配置
+    16.2.Http安全
+    16.3.多重HttpSecurity
+    16.4.定制DSLs
+    16.5.Post处理配置对象
+17.Kotlin配置
+    17.1.HttpSecurity
+    17.2.多重HttpSecurity
+18.Security命名空间配置
+    18.1.命名空间设计
+    18.2.命名空间配置
+    18.3.高级Web特性
+    18.4.方法安全
+    18.5.默认访问管理器
+19.测试
+    19.1测试安全
+    19.2.Spring MVC测试整合
+20.Spring Security Crypto模型
+    20.1.介绍
+    20.2.加密
+    20.3.生成密钥
+    20.4,密码编码
+21附录
+    21.1.安全数据架构
+    21.2.安全命名空间
+    21.3.FAQ
+反应式应用程序
+22.WebFlux Security
+    22.1.最简配置
+    22.2.明确配置
+23.安全防范
+    23.1.跨站伪请求
+    23.2.安全应答头
+    23.3.HTTP
+24.OAuth2 WebFlux
+    24.1.登录
+    24.2.客户端
+    24.3.源服务
+25.注册OAuth
+26.反应式X.509身份验证
+27.WebClient
+    27.1.安装
+    27.2.隐式客户端
+    27.3.显示客户端
+    27.4.客户端注册
+28.开启反应式安全方法
+29.反应式测试支持
+    29.1.测试反应安全方法
+    29.2.测试web客户端支持
+30.RSocket安全
+    30.1.最简配置
+    30.2.添加安全接收器
+    30.3.身份验证
+    30.4.授权

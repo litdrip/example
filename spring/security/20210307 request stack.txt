@@ -1,0 +1,213 @@
+---------------------------------------------------------------------------------------------------
+Session获取
+Http11Processor.service
+CoyoteAdapter.service
+StandardEngineValve.invoke
+ErrorReportValva.invoke
+StandardHostValve.invoke
+AuthenticatorBase.invoke
+	request.getSessionInternal(false) 内部获取session
+	manger=context.getManager(); 获取管理器
+	session=manager.findSession(requestedSessionId)
+StandardManager.findSession
+	sessions.get(id).  Map<String, Session> sessions.
+---------------------------------------------------------------------------------------------------
+登录验证处理器过程
+UsernamePasswordAuthenticationFilter
+	判断是否需要身份验证,请求pattern='/login', 方法=POST.
+	尝试验证
+	请求中获得用户名密码.username,password.
+	使用用户密码建立UsernamePasswordAuthenticationToken
+	设置详细.
+	获取AuthenticationManager验证管理器开始验证.
+AuthenticationManager
+AnonymousAuthenticationProvider
+	开始验证.
+DaoAuthenticationProvider
+	开始验证.
+	用户缓存获取用户详细.
+	如果拿不到用户详细,从数据检索.
+DatabaseUserDetailsService
+	检索用户详细信息.返回UserDetails.
+DaoAuthenticationProvider
+	检查用户是否 锁定/启用/过期
+	额外检查用户密码. passwordEncoder.matches(明文,密文)
+	写入用户缓存UserCache.
+	建立成功验证Authentication,并返回.
+ProviderManager
+	清楚凭证,就是明文密码. UsernamePasswordAuthenticationToken.
+	发布用户验证成功事件.
+UsernamePasswordAuthenticationFilter
+CompositeSessionAuthenticationStrategy
+CsrfAuthenticationStrategy
+...
+SecurityContextPersistenceFilter
+	清除SecurityContextHolder.
+	保存context.
+HttpSessionSecurityContextRepository
+	
+---------------------------------------------------------------------------------------------------
+一个请求的大概过程
+at java.lang.Thread.run(Thread.java:748)
+at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)
+at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1589)
+	获取handshake
+	获得链接处理器,开始处理(socketWrapper, event)
+at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:868)
+	标记线程已被分配处理进入链接的数据.
+	获取Http处理器Http11Processor
+	Http处理器设置相关Ssl支持
+	socketWrapper设置Http处理器,进行关联.
+	Http处理器开始处理(socketWrapper, status)
+at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:65)
+at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:373)
+	解析请求头.
+	是否需要升级协议.
+	进一步获取适配器.CoyoteAdapter开始服务(request, response).
+at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343)
+	解析请求
+	 设置请求方案
+ 	 处理代理相关端口
+	 检查OPTIONS ping请求
+	 解码URI
+	 请求映射 服务名
+	 获取sessionID
+	 可能的重定向
+	 过滤处理TRACE方法
+	链接其身份验证授权
+	 获取用户名,并后续判断处理.
+	 设置授权类型
+	链接服务.容器.管道.第一个.调用处理(request,response).
+at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	请求主机.管道.第一个.调用处理(request,response).
+at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92)
+	调用下一个valve处理.
+at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:139)
+	上下文.管道.第一个.调用处理.
+at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:541)
+	是否存在一个缓存验证委托记录
+	获取安全容器
+	下个Valve执行
+at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:96)
+	选择适合的包装器.处理
+at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:202)
+	检查应用程序是否标记为不可用
+	检查servlet是否被标为不可用.
+	分配一个servlet实例处理请求.
+	设置分派类型
+	创建应用过滤链ApplicationFilterChain
+	过滤链开始处理.
+at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	保证一个请求调度执行一次.
+	获取已执行过滤器属性名
+	判断忽略或无需过滤请求.
+	将本过滤器名称属性设置到请求的已执行过滤器名属性中.
+	下个过滤器
+at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	允许为请求指定一种字符编码.
+	请求/响应设置字符编码
+at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:271)
+at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:358)
+	委任代理过滤器
+at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:178)
+at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:215)
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	仅调用一次过滤器
+at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:56)
+	整合SecurityContext和WebAsyncManager.
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.security.web.context.SecurityContextPersistenceFilter.doFilter(SecurityContextPersistenceFilter.java:105)
+	获取请求属性,判断保证仅应用一次过滤器.
+	建立SecurityContext,并设置到SecurityContextHolder.
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:77)
+at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:92)
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+at org.springframework.security.web.csrf.CsrfFilter.doFilterInternal(CsrfFilter.java:117)
+	避免CSRF攻击.
+	建立csrfToken,并设置到请求属性中.
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:116)
+	如果是登出URI请求.
+	进行登出,清理数据.
+	重定向url.
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter.doFilter(AbstractAuthenticationProcessingFilter.java:200)
+	身份验证过滤器.
+	如果请求uri匹配'/login' POST 方法 执行过滤器.
+	
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	如果一个缓存请求与当前请求匹配,则重构该请求.
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:158)
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:111)
+	匿名
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:137)
+	检查用户从请求开始就已验证,如果有调用配置SessionAuthenticationStrategy.
+	用于session-fixation保护机制或检查多此并行登录
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:118)
+	异常转换过滤器
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+at org.springframework.security.web.access.intercept.FilterSecurityInterceptor.doFilter(FilterSecurityInterceptor.java:90)
+at org.springframework.security.web.access.intercept.FilterSecurityInterceptor.invoke(FilterSecurityInterceptor.java:126)
+	安全拦截
+at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:320)
+at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	处理最初WebSocket的HTTP链接
+	终端未注册||未端请求升级 -> 跳下个过滤器.
+	判断pathInfo,如果通过则进行升级,否则跳下个过滤器.
+at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)
+at javax.servlet.http.HttpServlet.service(HttpServlet.java:733)
+	开始服务请求响应.
+at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883)
+	如果请求方法==PATCH||空 -> 处理请求.
+	调父类服务相应请求.
+at javax.servlet.http.HttpServlet.service(HttpServlet.java:626)
+	根据请求方法类型(get,put,post...)调用对应处理方法.
+at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:898)
+at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006)
+	建立本地上下文LocaleContext.
+	建立请求属性ServletRequestAttributes.
+	WebAsyncManager注册Servlet.
+	初始化上下文.
+	继续服务.
+at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:943)
+	建立请求属性快照,便于后面恢复初始属性.
+	设置请求属性,使框架能够处理和查看对象.
+	分派.
+at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1040)
+	检查请求多部分组成,解析.
+	根据多部组成获取请求处理器.
+	处理适配器.
+	使用处理器处理,返回mv.
+at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:792)
+	检查请求
+at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:878)
+	准备ModelAndView
+at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:105)
+	调用方法并处理返回数据.	
+at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:138)
+at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:190)
+at java.lang.reflect.Method.invoke(Method.java:498)
+at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+at sun.reflect.GeneratedMethodAccessor56.invoke(Unknown Source:-1)
+at controller.CommonController.login(CommonController.java:57)
+java.lang.Thread.State: RUNNABLE

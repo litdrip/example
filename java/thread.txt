@@ -1,0 +1,100 @@
+thread  线程
+
+系统基础
+    cpu核心/线程/时间轮转/进程/线程/并行/并发
+
+java基础
+    启动终止
+        三种启动方式
+        中断
+        安全终止
+    线程间共享
+        Synchronized (对象锁/类锁)
+        volatile
+        ThreadLocal
+    线程间协作
+        等待和通知机制(wait,notify,notifyAll)
+        Join
+        yield(),sleep(),wait(),notiyf()方法对锁的影响
+
+并发工具
+    Fork/Join
+    CountDownLatch
+    CyclicBarrier
+    Semaphore
+    Exchange
+    Callable,Future,FutureTask
+
+原子操作CAS
+    CAS原理
+    CAS问题
+        ABA问题
+        开销
+        只能保证一个共享变量的原子操作
+    原子操作类的使用
+        基本类型
+        数组
+        引用
+        带版本戳
+
+显示锁
+    Lock接口\核心方法和使用
+    Lock接口和synchronized的比较
+    ReentrantLock可重入锁/锁的公平和非公平
+    ReentrantReadWriteLock
+    Condition接口
+
+AQS(AbstractQueuedSynchronizer)
+    概念
+    使用方式和其中的设计模式
+    源码
+        AQS数据接口
+        节点在同步列中的增加和移出
+        独占式同步状态获取与释放
+        共享式同步状态与释放
+        condition(等待队列/await方法/signal方法)
+    ReentrantLock的实现
+    ReentrantReadWriteLock的实现
+
+并发容器
+    ConcurrentHashMap
+        使用/实现
+    ConcurrentSkipListMap
+    ConcurrentLinkedQueue
+    写时复制容器
+
+    阻塞队列
+        ArrayBlockingQueue 数组 有界
+        LinkedBlockingQueue 链表 有界
+        PriorityBlockingQueue 优先级 无界
+        DelayQueue 优先级 无界
+        SynchronousQueue 不存储的队列
+        LinkedTransferQueue 链表 无界
+        LinkedBlockingDeque 链表 双向
+
+线程池
+    概念
+    使用线程池
+    工作机制
+    合理配置线程池
+    类
+        FixedThreadPool
+        SingleThreadExecutor
+        CachedThreadPool
+        WorkStealingPool
+        ScheduledThreadPoolExecutor
+    Executor框架
+    CompletionService
+
+并发安全
+    类的线程安全
+        无状态
+        不可变
+    线程不安全引发的问题
+        死锁
+        活锁
+    线程安全的单例模式
+        双重检查锁定
+        懒汉式
+        饿汉式
+

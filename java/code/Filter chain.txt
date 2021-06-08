@@ -1,0 +1,125 @@
+package chain;
+
+public interface Filter {
+
+    void doFilter(FilterChain chain);
+
+}
+
+
+package chain;
+
+public interface FilterChain {
+
+    void doFilter();
+
+}
+
+
+package chain;
+
+public class FilterAImpl implements Filter {
+    @Override
+    public void doFilter(FilterChain chain) {
+        System.out.println("do filter A .");
+        chain.doFilter();
+    }
+}
+
+
+package chain;
+
+public class FilterBImpl implements Filter {
+    @Override
+    public void doFilter(FilterChain chain) {
+        System.out.println("do filter B.");
+        chain.doFilter();
+    }
+}
+
+
+package chain;
+
+public class FilterNameImpl implements Filter {
+
+    private String name;
+
+    public FilterNameImpl(String name){
+        this.name = name;
+    }
+
+    @Override
+    public void doFilter(FilterChain chain) {
+        System.out.println("do filter " + this.name + " .");
+        chain.doFilter();
+    }
+}
+
+
+package chain;
+
+import java.util.Arrays;
+
+public class ChainImpl implements FilterChain {
+
+    private Filter[] filterArr;
+
+    private int pos = 0;
+
+    private int n = 0;
+
+    private int addPos = 0;
+
+
+    @Override
+    public void doFilter() {
+        if (pos < n){
+            pos++;
+            filterArr[pos - 1].doFilter(this);
+        }
+    }
+
+    public void setFilterArr(Filter[] filterArr) {
+        this.filterArr = filterArr;
+        n = filterArr.length;
+        pos = n - 1;
+    }
+
+    public void addFilter(Filter filter){
+        if (this.filterArr == null){
+            this.filterArr = new Filter[10];
+            addPos = 0;
+            n = 1;
+            this.filterArr[addPos] = filter;
+        }else {
+            if (n >= this.filterArr.length) {
+                this.filterArr = Arrays.copyOf(this.filterArr, n + n / 2);
+            }
+            addPos++;
+            n++;
+            this.filterArr[addPos] = filter;
+        }
+    }
+
+    public static void main(String[] args) {
+        ChainImpl chain = new ChainImpl();
+
+        chain.addFilter(new FilterAImpl());
+        chain.addFilter(new FilterBImpl());
+        chain.addFilter(new FilterNameImpl("1"));
+        chain.addFilter(new FilterNameImpl("2"));
+        chain.addFilter(new FilterNameImpl("3"));
+        chain.addFilter(new FilterNameImpl("4"));
+        chain.addFilter(new FilterNameImpl("5"));
+        chain.addFilter(new FilterNameImpl("6"));
+        chain.addFilter(new FilterNameImpl("7"));
+        chain.addFilter(new FilterNameImpl("8"));
+        chain.addFilter(new FilterNameImpl("9"));
+        chain.addFilter(new FilterNameImpl("10"));
+        chain.addFilter(new FilterNameImpl("11"));
+
+        chain.doFilter();
+    }
+
+}
+

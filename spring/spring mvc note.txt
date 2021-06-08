@@ -1,0 +1,234 @@
+手册
+https://docs.spring.io/spring-framework/docs/current/reference/html/web.html
+快速生成项目
+https://start.spring.io/
+实现教程
+https://spring.io/guides
+
+网上资料
+http://c.biancheng.net/view/4397.html
+
+----------------------------------------------------------------------------------------
+>什么是MVC?
+    MVC是一种设计模式,Model,View,Controller的缩写,即模型,视图,控制.将应用功能分解为三个职责层
+        次.设计目的是实现模型与视图的代码分离,从而使程序可以有不同的表现形式.
+    视图:最上层与用户沟通,展示数据与提交用户的请求输入.
+    模型:最底层存储数据与处理业务逻辑.
+    控制器:介于视图与模型间,将请求交给特定业务模型,再将结果返回视图.
+
+    优点:
+        耦合性低,重用性高,部署快,可维护性高.
+    缺点:
+        系统结果实现复杂,调试困难,不适合小型应用.
+
+    基于Servlet的MVC实现
+    视图:HTML JSP
+    模型:JavaBean对象,和处理业务的java类
+    控制器:Servlet
+----------------------------------------------------------------------------------------
+>spring mvc基本原理?
+    工作流程:
+    1.客户端请求服务器,请求交由DispatcherServlet分发器.
+    2.分发器找到HandlerMapping处理,再找到相应的Controller.
+    3.Controller调用服务器处理,将结果ModelAndView返回视图层.
+    4.DispatcherServlet找到ViewResolver试图解析器,找到ModelAndView指定的试图.
+    5.试图处理完成后返回客户端.
+----------------------------------------------------------------------------------------
+>实现最简单的应用.spring boot
+pom.xml:
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.4.4</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>sk</groupId>
+	<artifactId>spring-mvc</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>spring-mvc</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>1.8</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+
+SpringMvcApplication:
+
+package application;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class SpringMvcApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(SpringMvcApplication.class, args);
+	}
+}
+----------------------------------------------------------------------------------------
+>添加页面首页 使用thymeleaf
+pom添加依赖:
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-thymeleaf</artifactId>
+</dependency>
+
+新建控制文件:controller.CommonController:
+package controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class CommonController {
+    @GetMapping("/index")
+    public String index(){
+        return "index";
+    }
+}
+
+app启动扫描新加的控制包@ComponentScan("controller")
+
+新建resources/templates/index.html:
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+</head>
+<body>
+<p><h4>index</h4>
+</body>
+</html>
+
+启动后访问:http://localhost:8080/index
+----------------------------------------------------------------------------------------
+>视图解析 
+https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc-viewresolver
+1.1.8. View Resolution 视图解析
+Spring MVC定义ViewResolver和View接口使得浏览器渲染模型时不必绑定特定的视图技术.ViewResolver
+提供视图名称与实际视图的映射.视图解决了在处理特定视图前准备数据.
+
+下表提供了更多ViewResolver的层次结构细节:
+视图解析实现表
+
+AbstractCachingViewResolver
+抽象缓存视图处理器的子类缓存解析的视图实例.缓存提高了某些试图技术的性能.可以通过设置配置
+cache项为false值来关闭.此外,如果你必须要在运行时刷新某些视图,可以使用removeFromCache(
+String viewName, Locale loc)方法来删除缓存.
+
+UrlBaseViewResolver
+简单的实现ViewResolver接口,在没有显式的映射直接将逻辑试图名做为URLS.如果逻辑名称与资源的
+名称匹配这样做是合适的,无需任意映射.
+
+InternalResourceViewResolver
+InternalResourceViewResolver是UrlBasedViewResolver的子类,支持InternalResourceView和
+JstlView.
+
+FreeMarkerViewResolver
+UrlBaseViewResolver的子类,支持FreeMakerView和自定义的子类.
+
+ContentNegotiatingViewResolver
+基于请求文件名或Accept头字段解析.
+
+BeanNameViewResolver
+视图名解释为bean名称.这是非常灵活变体允许基于试图名称混合匹配不同视图类型,每个试图可以
+被定义为bean或配置的类.
+
+Handling 处理
+可是使用视图链接解析器,定义使用多个解析器,有必要的情况下,通过设置order属性指定排序.记住,
+order值越高,视图解析的位置越晚.
+视图解释器协定,通过返回null表示未找到试图.但是,对于JSPs和InternalResourceViewResolver,
+判断JSP存在的唯一方法是执行RequestDispatcher.因此,必须总是将InternalResourceViewResolver
+配置为最后一个解析其.
+配置试图解析就是简单的增加一个ViewResolver bean. MVC Config提供专用API配置.
+
+Redirecting 重定向
+特别的redirect:前缀在视图名,执行重定向.UrlBaseViewResolver识别为重定向指令.余下的视图名
+就是重定向URL.
+效果同控制器返回一个重定向视图,但现在控制器可以通过操作逻辑试图名.逻辑视图(如:redirect:
+/myapp/some/resource)重定向当前servlet上下文,重定向绝对路径如:
+redirect:https://myhost.com/some/arbitrary/path.
+注意,如果控制器方法注释了@ResponseStatus,注释值优先与redirectView设置的响应值.
+
+Forwarding 转发
+特殊词"forward:"前缀在视图名,最终由UrlBaseViewResolver或其子类解析.这会创建一个
+InternalResourceView并执行RequestDispatcher.forward().因此,转发对于
+InternalResourceViewResolver和InternalResourceView没有用,但是如果使用其它的视图技术它可
+能会有所帮助,但是依然希望Servlet/JSP引擎强制处理资源转发.注意,也可以通过链接多个视图处
+理来替代.
+
+Content Negotiation 内容协商
+本身不解析视图,而是委托于其它视图解析器,选择与客户端要求相识的陈述视图.陈述方式可以由
+Accept头字段或从查询入参决定(如:"/path?format=pdf").
+内容协商视图解析器选择适当的视图处理请求,通过比较请求媒体类型(也称Content-Type)由每个关
+联的视图解析器支持.第一个在列表中兼容的视图返回表达给客户端.如果兼容视图没有支持的视图
+解析,将查询通过通过DefaultViews指定的视图列表.后者适用于单例视图,可以呈现当前资源的适当
+表示,而不逻辑视图名.Accept头部属性可以包含通配符(例:text/*),这中种情况下视图Content-Type
+是text/xml时是匹配的.
+
+----------------------------------------------------------------------------------------
+重定向 转发
+CommonController:
+    @GetMapping("/redirectFrom")
+    public String redirectFrom(){
+        return "redirect:target";
+    }
+
+    @GetMapping("/target")
+    public String redirectTo(){
+        return "target";
+    }
+
+    @GetMapping("/forward")
+    public String forward(){
+        return "forward:target";
+    }
+
+target.html:
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>redirect to</title>
+</head>
+<body>
+<p><h4>目标页面</h4>
+<ul>
+    <li><a href="index">index</a></li>
+</ul>
+</body>
+</html>
+----------------------------------------------------------------------------------------
+接收参数
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------

@@ -1,0 +1,32 @@
+windows下安装mysql有两种方式。
+1 zip解压安装
+	没有安装脚本，解压即可，然后手动创建配置文件，数据目录，执行初始化过程。
+	安装后碰到了缺dll，是少了vc++2015什么的。直接放弃，使用msi会自动校验下载。
+2 msi安装程序
+	安装过程，需要选的配置还是挺多，看看选选就好了。
+	这里安装不知道除了什么问题，程序生成的配置my.ini跟data目录跑到了progamedata
+	目录下，启动时候就加载不到。 手动搬到了安装目录下面。
+
+启动数据库：
+bin目录下
+cmd > mysqld -console
+
+访问:
+cmd > mysql -u root -p
+密码：123456
+安装时候设置的密码，命令-h 127.0.0.1参数无时，默认本地。端口3306。
+
+查看数据库
+mysql > show databases;
+
+创建数据库
+mysql > create database testmvc
+
+创建用户
+mysql > create user 'test'@'%' identified by '123456';
+
+用户受权
+mysql > grant all privileges on *.* to 'test'@'%';
+
+生效设置
+mysql > flush privileges;
