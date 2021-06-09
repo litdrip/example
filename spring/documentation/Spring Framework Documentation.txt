@@ -1,0 +1,45 @@
+https://docs.spring.io/spring-framework/docs/current/reference/html/
+----------------------------------------------------------------------------------------
+Spring框架
+	版本5.3.8
+
+	更新,升级说明,支持版本,其它话题,独立于发布,由外部Github Wiki项目维护.
+	https://github.com/spring-projects/spring-framework/wiki
+
+概述	历史,设计思想,反馈,入门.
+https://docs.spring.io/spring-framework/docs/current/reference/html/overview.html#overview
+
+核心	IoC容器,事件,资源,国际化,验证,数据绑定,类型转换,SpEL,AOP.
+https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#spring-core
+
+测试	模拟对象,测试上下文框架,Spring MVC测试,Web测试客户端.
+https://docs.spring.io/spring-framework/docs/current/reference/html/testing.html#testing
+
+数据访问	事务,DAO支持,JDBC,R2DBC,O/R映射,XML编组.
+https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#spring-data-tier
+
+Web Servlet	Spring MVC,Web套接字,SockJS,STOMP消息.
+https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#spring-web
+
+Web响应式	Spring WebFlux,Web客户端,Web套接字,RSocket.
+https://docs.spring.io/spring-framework/docs/current/reference/html/web-reactive.html#spring-webflux
+
+集成	远程控制,JMS,JCA,JMX,Email,任务,计划,缓存.
+https://docs.spring.io/spring-framework/docs/current/reference/html/integration.html#spring-integration
+
+语言	Kotlin,Groovy,动态语言.
+https://docs.spring.io/spring-framework/docs/current/reference/html/languages.html#languages
+
+附录	各种相关.
+https://docs.spring.io/spring-framework/docs/current/reference/html/appendix.html#appendix
+
+Rod Johnson, Juergen Hoeller, Keith Donald, Colin Sampaleanu, Rob Harrop, 
+Thomas Risberg, Alef Arendsen, Darren Davison, Dmitriy Kopylenko, Mark Pollack, 
+Thierry Templier, Erwin Vervaet, Portia Tung, Ben Hale, Adrian Colyer, John Lewis, 
+Costin Leau, Mark Fisher, Sam Brannen, Ramnivas Laddad, Arjen Poutsma, 
+Chris Beams, Tareq Abedrabbo, Andy Clement, Dave Syer, Oliver Gierke, 
+Rossen Stoyanchev, Phillip Webb, Rob Winch, Brian Clozel, Stephane Nicoll, 
+Sebastien Deleuze, Jay Bryant, Mark Paluch
+----------------------------------------------------------------------------------------
+版权©2002-2021 Pivotal,Inc.保留所有权力.
+副本可以自己用或分发给其他人,前提是不能收取任何费用,每份副本载有版权说明.
